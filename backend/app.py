@@ -23,5 +23,11 @@ if __name__ == "__main__":
     # db.session.add(User(username="panther", email="panther@user.com", password="12"))
     # db.session.commit()
     # print("Database Created successfully!!!!!")
-
+    
+    # table = UserCardDetails(attr_name="adhar", attr_val="22HE2R", cardname = "Adhar Card", user_id = 2)
+    # db.session.add(table)
+    # db.session.commit()
+    # print("Data Created!")
+    
     app.run()
+
