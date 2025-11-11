@@ -6,6 +6,7 @@ class User(db.Model):
     email = db.Column(db.String, unique = True, nullable = False)
     password = db.Column(db.String, nullable = False)
     role = db.Column(db.String, nullable = False, default ="user")
+    card_details = db.relationship("UserCardDetails", backref="bearer")
 
 class UserCardDetails(db.Model):
     id = db.Column(db.Integer, primary_key = True)

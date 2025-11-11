@@ -1,12 +1,45 @@
-User endpoints
-
-/api/register  | Done
-/api/user_home
-/api/request/<cardname>
-/api/view/<cardname>
+/*
+/api/dashboard -1
 
 Admin endpoints
 
-/api/admin_home
-/api/update/<cardname>/<user_id>
-/api/generate/<cardname>/<user_id>
+/api/update/<cardname>
+/api/generate<cardname> -2
+
+User endpoints
+
+/api/register
+/api/request/<cardname> -3
+/api/view/<cardname> */
+
+admin_json = {
+    "admin_name": "batman",
+    "users": 30,
+    "card_requests": 10,
+    "card_granted": 12,
+    "available_cards": 4,
+    "card_request_details": [
+        {
+            "username": "user_1",
+            "cardname": "aadhar",
+            "status": "requested"
+        },
+        {
+            "username": "user_2",
+            "cardname": "aadhar",
+            "status": "under_verification"
+        },
+        {
+            "username": "user_3",
+            "cardname": "pan",
+            "status": "generated"
+        },....
+    ]
+}
+
+user_json = [
+    {
+        "username" : "test_user",
+        
+    }
+]

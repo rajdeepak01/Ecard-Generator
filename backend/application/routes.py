@@ -2,9 +2,12 @@ from flask import current_app as app, jsonify, request, abort
 from .models import *
 from .database import db
 from flask_jwt_extended import create_access_token, current_user, jwt_required
+from functools import wraps
+import random, string
 
 def role_required(required_role):
     def wrapper(fn):
+        @wraps(fn)
         @jwt_required()
         def decorator(*args, **kwargs):
             if current_user.role != required_role:
@@ -39,71 +42,142 @@ def register():
         user = User(username=username, password=password, email=email)
         db.session.add(user)
         db.session.commit()
-        return jsonify("User added successfully")
-
-@app.route("/api/user_home")
-@role_required('user')
-def user_home():
-
-    card_details = UserCardDetails.query.filter_by(user_id = current_user.id).all()
-    card_json = []
-    for card in card_details:
-        card_dict = {}
-        card_dict["atr_name"] = card.attr_name
-        card_dict['attr_val'] = card.attr_val
-        card_dict['cardname'] = card.cardname
-        card_json.append(card_dict)
-
-    return jsonify(card_json)
-
-@app.route("/api/request/<cardname>", methods = ['POST'])
-@jwt_required()
-def requested_card(cardname):
-    if cardname == "aadhar":
-        pass
-    elif cardname == "pan":
-        fullname = request.json.get("fullname", None)
-        dob = request.json.get("dob", None)
-        ph = request.json.get("ph", None)
-        en1 = UserCardDetails(attr_name = "fullname", attr_val = fullname, cardname = cardname, user_id = current_user.id)
-        en2 = UserCardDetails(attr_name = "dob", attr_val = dob, cardname = cardname, user_id = current_user.id)
-        en3 = UserCardDetails(attr_name = "ph", attr_val = ph, cardname = cardname, user_id = current_user.id)
-        db.session.ad
-    elif cardname == "voter":
-        pass
-    elif cardname == "driving":
-        pass
+        return jsonify("User added successfully"), 201
 
 
 #dashboard
 
-# @app.route('/dashboard')
-# @jwt_required()
-# def dashboard():
-#     if current_user.role == "admin":
-#         return "Welcome to admin dashboard"
-#     else:
-#         return "Welcome to User dashboard!"
+@app.route("/api/dashboard") #bydefault method get so no need to mension
+@role_required("admin")
+def dashboard():
+    if current_user.role == "admin":
+        users = len(User.query.filter_by(role = "user").all())
+        card_requests = UserCardDetails.query.filter_by(attr_name = "status").all()
+        requested = under_verification = verified = generated = 0
+        card_request_json = []
+        for detail in card_requests:
+            detail_dict = {}
+            detail_dict["username"] = detail.bearer.username
+            detail_dict["cardname"] = detail.cardname
+            detail_dict["status"]   = detail.attr_val
+
+            if detail.attr_val == "requested":
+                requested += 1
+            if detail.attr_val == "under_verification":
+                under_verification += 1
+            if detail.attr_val == "verified":
+                verified += 1
+            if detail.attr_val == "generated":
+                generated +=1
+            card_request_json.append(detail_dict)
+
+        return jsonify({
+            "admin_name" : current_user.username,
+            "users" : users,
+            "card_requests" : requested,
+            "under_verification" : under_verification,
+            "verified" : verified,
+            "card_generated" : generated,
+            "available_cards" : 4,
+            "card_requested_details" : card_request_json
+        })
+    else:
+        return "Welcome to user dashboard"
     
-# @app.route("/onlyadmin")
-# @role_required("admin")
-# def admin_endpoint():
-#     return "Only admins are allowed"
+@app.route("/api/generate/<string:cardname>/<int:user_id>")
+@role_required("admin")
+def generate(cardname, user_id):
+    detail = UserCardDetails.query.filter_by(user_id = user_id, cardname = cardname, attr_name = "status").first()
+    detail.attr_val = "generated"
+    db.session.commit()
 
-# def decorator_name():
-#     def wrapper(func):
-#         funct()
-#         return func
-#     return wrapper
+    key = ""
+    if cardname == "aadhar":
+        key = random.randint(10**11, 10**12-1)
+    
+    elif cardname == "pan":
+        first_part = ''.join(random.choice(string.ascii_uppercase, k = 5))
+        middle_part = ''.join(random.choices(string.digits, k=2))
+        last_part = ''.join(random.choices(string.digits, k = 7))
+        key = first_part + "-" + middle_part + "-" + last_part
+    
+    elif cardname == "driving":
+        part1 = ''.join(random.choice(string.ascii_uppercase, k = 2))
+        part2 = ''.join(random.choices(string.digits, k=2))
+        part3 = ''.join(random.choices(string.digits, k = 7))
+        key = part1 + "-" + part2 + "-2025" + part3
+    else:
+        first_part = ''.join(random.choice(string.ascii_uppercase, k = 3))
+        last_part = ''.join(random.choices(string.digits, k = 7))
+        key = first_part + "-" + last_part
+    
+    usercarddetails1 = UserCardDetails(attr_name = "key", attr_val=key, cardname=cardname, user_id=current_user.id)
+    db.session.add(usercarddetails1)
+    db.session.commit()
+    return {
+        "message": f"{cardname} card created for user: {user_id}",
+        "key" : key
+    }
 
-# @decorator_name()
+#user api
 
-# def decorator_name(argument):
-#     def wrapper(func):
-#         def decor(*args, **kwargs)
-#             return func(*args, **kwargs)
-#         # aditional functionality
-#         return decor
-#     return wrapper
+@app.route('/api/request/<string:cardname>')
+@role_required("user")
+def request_card(cardname):
+    if cardname == "aadhar":
+        fullname = request.json.get("fullname", None)
+        dob = request.json.get("dob", None)
+        address = request.json.get("address", None)
+        gender = request.json.get("gender", None)
+        ph = request.json.get("ph", None)
 
-# @decorator_name("argument")
+        attr1 = UserCardDetails(attr_name = "fullname", attr_val = fullname, cardname = cardname, user_id = current_user.id)
+        attr2 = UserCardDetails(attr_name = "dob", attr_val = dob, cardname = cardname, user_id = current_user.id)
+        attr3 = UserCardDetails(attr_name = "address", attr_val = address, cardname = cardname, user_id = current_user.id)
+        attr4 = UserCardDetails(attr_name = "gender", attr_val = gender, cardname = cardname, user_id = current_user.id)
+        attr5 = UserCardDetails(attr_name = "ph", attr_val = ph, cardname = cardname, user_id = current_user.id)
+        attr6 = UserCardDetails(attr_name = "status", attr_val = "requested", cardname = cardname, user_id = current_user.id)
+
+        db.session.add_all([attr1, attr2, attr3, attr4, attr5, attr6])
+        db.session.commit()
+    elif cardname == "pan":
+        fullname = request.json.get("fullname", None)
+        dob      = request.json.get("dob", None)
+        ph       = request.json.get("ph", None)
+
+        attr1 = UserCardDetails(attr_name = "fullname", attr_val = fullname, cardname=cardname, user_id = current_user.id)
+        attr2 = UserCardDetails(attr_name = "dob", attr_val = dob, cardname = cardname, user_id = current_user.id)
+        attr3 = UserCardDetails(attr_name = "ph", attr_val = ph, cardname = cardname, user_id = current_user.id)
+        attr4 = UserCardDetails(attr_name = 'status', attr_val = "requested", cardname = cardname, user_id = current_user.id)
+
+        db.session.add_all([attr1, attr2, attr3, attr4])
+        db.session.commit()
+
+    elif cardname == "voter":
+        fullname = request.json.get("fullname", None)
+        dob      = request.json.get("dob", None)
+        ward     = request.json.get("ward", None)
+        ph       = request.json.get("ph", None)
+
+        attr1 = UserCardDetails(attr_name = "fullname", attr_val = fullname, cardname=cardname, user_id = current_user.id)
+        attr2 = UserCardDetails(attr_name = "dob", attr_val = dob, cardname = cardname, user_id = current_user.id)
+        attr3 = UserCardDetails(attr_name = "ph", attr_val = ph, cardname = cardname, user_id = current_user.id)
+        attr4 = UserCardDetails(attr_name = "ward", attr_val = ward, cardname = cardname, user_id = current_user.id)
+        attr5 = UserCardDetails(attr_name = 'status', attr_val = "requested", cardname = cardname, user_id = current_user.id)
+
+        db.session.add_all(attr1, attr2, attr3, attr4, attr5)
+        db.session.commit() 
+    
+    else:
+        fullname = request.json.get("fullname", None)
+        v_no      = request.json.get("dob", None)
+        ph       = request.json.get("ph", None)
+
+        attr1 = UserCardDetails(attr_name = "fullname", attr_val = fullname, cardname=cardname, user_id = current_user.id)
+        attr2 = UserCardDetails(attr_name = "v_no", attr_val = v_no, cardname = cardname, user_id = current_user.id)
+        attr3 = UserCardDetails(attr_name = "ph", attr_val = ph, cardname = cardname, user_id = current_user.id)
+        attr4 = UserCardDetails(attr_name = 'status', attr_val = "requested", cardname = cardname, user_id = current_user.id)
+
+        db.session.add_all(attr1, attr2, attr3, attr4)
+        db.session.commit()
+    return jsonify(message = f"requested for {cardname} made successfully!")
