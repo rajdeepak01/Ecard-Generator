@@ -1,0 +1,185 @@
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --accent-primary: #0f3460;
+  --accent-secondary: #533d7b;
+  --text-primary: #e6e6e6;
+  --text-secondary: #b8b8b8;
+  --highlight: #00b4d8;
+  --shadow: rgba(0, 0, 0, 0.3);
+  --border-radius: 12px;
+  --transition-speed: 0.3s;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  transition: background-color var(--transition-speed);
+}
+
+#main {
+  padding: 20px;
+}
+
+#canvas {
+  width: 90%;
+  max-width: 1200px;
+  margin: 30px auto;
+  min-height: 600px;
+  background-color: var(--bg-secondary);
+  box-shadow: 0 8px 24px var(--shadow);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  border: 1px solid var(--accent-primary);
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+#canvas:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px var(--shadow);
+}
+
+#form-body {
+  width: 90%;
+  max-width: 450px;
+  margin: 80px auto;
+  background-color: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  box-shadow: 0 8px 24px var(--shadow);
+  padding: 40px 30px;
+  border: 1px solid var(--accent-primary);
+  transition: transform var(--transition-speed);
+}
+
+#form-body:hover {
+  transform: scale(1.02);
+}
+
+.heading {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 30px;
+  text-align: center;
+  color: var(--highlight);
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--highlight), var(--accent-secondary));
+}
+
+/* Form elements styling */
+input, textarea, select, button {
+  width: 100%;
+  padding: 12px 15px;
+  margin: 10px 0;
+  border: 1px solid var(--accent-primary);
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-size: 1rem;
+  transition: all var(--transition-speed);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--highlight);
+  box-shadow: 0 0 0 2px rgba(0, 180, 216, 0.2);
+}
+
+button {
+  background: linear-gradient(135deg, var(--highlight), var(--accent-secondary));
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  margin-top: 20px;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #canvas {
+    width: 95%;
+    padding: 20px;
+    min-height: 500px;
+  }
+
+  #form-body {
+    margin: 50px auto;
+    padding: 30px 20px;
+  }
+
+  .heading {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  #canvas {
+    margin: 20px auto;
+    min-height: 400px;
+  }
+
+  .heading {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  input, textarea, select, button {
+    padding: 10px 12px;
+  }
+}
+
+/* Animation for better interactivity */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#canvas, #form-body {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Scrollbar styling for modern browsers */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-secondary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--highlight);
+}
