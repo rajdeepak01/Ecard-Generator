@@ -23,7 +23,7 @@ def login():
 
     user = User.query.filter_by(username = username).one_or_none()
     if not user or not user.password == password:
-        return jsonify("Wrong username or password"), 401
+        return jsonify(message = "Wrong username or password"), 400
     
     access_tocken = create_access_token(identity=user)
     return jsonify(access_tocken=access_tocken)
@@ -48,7 +48,7 @@ def register():
 #dashboard
 
 @app.route("/api/dashboard") #bydefault method get so no need to mension
-@role_required("admin")
+@jwt_required()
 def dashboard():
     if current_user.role == "admin":
         users = len(User.query.filter_by(role = "user").all())
@@ -72,6 +72,7 @@ def dashboard():
             card_request_json.append(detail_dict)
 
         return jsonify({
+            "role" :current_user.role,
             "admin_name" : current_user.username,
             "users" : users,
             "card_requests" : requested,
@@ -82,8 +83,24 @@ def dashboard():
             "card_requested_details" : card_request_json
         })
     else:
-        return "Welcome to user dashboard"
-    
+        user_card_details = UserCardDetails.query.filter_by(attr_name = "status", user_id = current_user.id).all()
+        available_cards = []
+        card_requests = []
+        for detail in user_card_details:
+            detail_dict = {}
+            if detail.attr_val == "generated":
+                detail_dict["cardname"] = detail.cardname
+                available_cards.append(detail_dict)
+            else:
+                detail_dict["cardname"] = detail.cardname
+                detail_dict["status"]   = detail.attr_val
+                card_requests.append(detail_dict)
+        return jsonify({
+            "role" : current_user.role,
+            "username" : current_user.username,
+            "available_cards" : available_cards,
+            "card_requests" : card_requests
+        })   
 @app.route("/api/generate/<string:cardname>/<int:user_id>")
 @role_required("admin")
 def generate(cardname, user_id):
@@ -96,7 +113,7 @@ def generate(cardname, user_id):
         key = random.randint(10**11, 10**12-1)
     
     elif cardname == "pan":
-        first_part = ''.join(random.choice(string.ascii_uppercase, k = 5))
+        first_part = ''.join(random.choices(string.ascii_uppercase, k=5))
         middle_part = ''.join(random.choices(string.digits, k=2))
         last_part = ''.join(random.choices(string.digits, k = 7))
         key = first_part + "-" + middle_part + "-" + last_part
@@ -121,7 +138,7 @@ def generate(cardname, user_id):
 
 #user api
 
-@app.route('/api/request/<string:cardname>')
+@app.route('/api/request/<string:cardname>', methods=["POST"])
 @role_required("user")
 def request_card(cardname):
     if cardname == "aadhar":

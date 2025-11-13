@@ -3,14 +3,16 @@ import LoginPage from './components/LoginPage.vue'
 import FootPage from './components/FootPage.vue'
 import NavPage from './components/NavPage.vue'
 import AdminPage from './components/AdminPage.vue'
+import RequestCard from './components/RequestCard.vue'
+
 </script>
 
 <template>
     <NavPage/>
-      <LoginPage/>
+          <RouterView/>
+          <login/>
     <FootPage/>
-
-    <AdminPage/>
+    
 
 </template>
 
